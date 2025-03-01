@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Menu Bar -->
+    <div class="top-menu">
+        <div class="menu-left">
+            <h1>ConnectEd Insights</h1>
+        </div>
+        <div class="menu-right">
+            <a href="/">Home</a>
+            <a href="/map">Map</a>
+            <a href="#reports">Reports</a>
+            <a href="#analytics">Analytics</a>
+        </div>
+    </div>
+
+    <!-- Left Navbar -->
+    <nav class="sidebar">
+        <div class="nav-header">
+            <h3>Quick Access</h3>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/map"><i class="fas fa-map-marker-alt"></i> School Map</a></li>
+            <li><a href="#priority"><i class="fas fa-exclamation-triangle"></i> Priority Schools</a></li>
+            <li><a href="#regional"><i class="fas fa-globe-africa"></i> Regional Analysis</a></li>
+            <li><a href="#historical"><i class="fas fa-chart-line"></i> Historical Trends</a></li>
+            <li class="divider"></li>
+            <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+</body>
+</html>

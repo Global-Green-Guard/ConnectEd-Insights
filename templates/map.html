@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="map"></div>
+<div class="legend">
+    <div class="legend-item">
+        <div class="legend-color" style="background: #4CAF50;"></div>
+        <span>Adequate Connectivity (>20Mbps)</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background: #FFC107;"></div>
+        <span>Moderate Connectivity (10-20Mbps)</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background: #F44336;"></div>
+        <span>Poor Connectivity (<10Mbps)</span>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize the map centered on Kenya
+    var map = L.map('map').setView([-1.2921, 36.8219], 7);
+
+    // Add the OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Function to determine marker color based on connectivity status
+    function getColor(status) {
+        if (status === 'adequate') return '#4CAF50';
+        if (status === 'moderate') return '#FFC107';
+        return '#F44336';
+    }
+
+    // Add a loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loading';
+    loadingDiv.innerHTML = 'Loading school data...';
+    loadingDiv.style.position = 'absolute';
+    loadingDiv.style.top = '10px';
+    loadingDiv.style.right = '10px';
+    loadingDiv.style.padding = '10px';
+    loadingDiv.style.background = 'white';
+    loadingDiv.style.border = '1px solid #ccc';
+    loadingDiv.style.borderRadius = '5px';
+    loadingDiv.style.zIndex = '1000';
+    document.body.appendChild(loadingDiv);
+
+    // Fetch school data from the dedicated API endpoint
+    fetch('/api/schools')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(schools => {
+            console.log('Loaded', schools.length, 'schools'); // Log the count of schools
+
+            // Create a map bounds object to automatically fit all markers
+            const bounds = L.latLngBounds();
+
+            // Add school markers
+            schools.forEach(school => {
+                // Skip schools with invalid coordinates
+                if (!school.latitude || !school.longitude) {
+                    console.warn('School missing coordinates:', school.name);
+                    return;
+                }
+
+                // Create circle marker
+                const marker = L.circleMarker([school.latitude, school.longitude], {
+                    radius: 8,
+                    fillColor: getColor(school.connectivity_status),
+                    color: '#fff',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                })
+                .bindPopup(`
+                    <b>${school.name}</b><br>
+                    <strong>Status:</strong> ${school.connectivity_status}<br>
+                    <strong>Connectivity:</strong> ${school.current_connectivity.toFixed(1)} Mbps<br>
+                    <strong>Students:</strong> ${school.students_affected}<br>
+                    <strong>Education Level:</strong> ${school.education_level}<br>
+                    <strong>Region:</strong> ${school.region}
+                `)
+                .addTo(map);
+
+                // Extend bounds to include this marker
+                bounds.extend([school.latitude, school.longitude]);
+            });
+
+            // Fit the map to show all markers
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+
+            // Remove loading indicator
+            document.body.removeChild(loadingDiv);
+        })
+        .catch(error => {
+            console.error('Error fetching school data:', error);
+            loadingDiv.innerHTML = 'Error loading data. See console for details.';
+            loadingDiv.style.background = '#ffdddd';
+        });
+
+    // Add responsive behavior for the map
+    window.addEventListener('resize', function() {
+        map.invalidateSize();
+    });
+</script>
+
+<style>
+    #map {
+        height: 900px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .legend {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
