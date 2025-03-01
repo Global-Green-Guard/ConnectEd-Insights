@@ -152,4 +152,4 @@ async def show_schools_map(request: Request):
 # Other endpoints remain the same...
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", reload=True)
