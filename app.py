@@ -146,10 +146,38 @@ async def get_all_schools():
 async def show_schools_map(request: Request):
     return templates.TemplateResponse(
         "map.html",
-        {"request": request}
+        {"request": request, "title": "School Connectivity Map"}
     )
 
-# Other endpoints remain the same...
+# New analytics endpoint for the connectivity gap analysis page
+@app.get("/analytics", response_class=HTMLResponse)
+async def analytics_page(request: Request):
+    return templates.TemplateResponse(
+        "analytics.html", 
+        {"request": request, "title": "Connectivity Gap Analysis"}
+    )
+
+@app.get("/regional-analysis", response_class=HTMLResponse)
+async def regional_analysis_page(request: Request):
+    """Endpoint for regional connectivity analysis page"""
+    return templates.TemplateResponse(
+        "regional_analysis.html",
+        {
+            "request": request,
+            "title": "Regional Connectivity Analysis"
+        }
+    )
+
+@app.get("/priority-schools", response_class=HTMLResponse)
+async def priority_schools_page(request: Request):
+    """Endpoint for priority schools analysis page"""
+    return templates.TemplateResponse(
+        "priority.html",
+        {
+            "request": request,
+            "title": "Priority Schools Analysis"
+        }
+    )
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", reload=True)

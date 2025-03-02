@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-primary">
+                <i class="fas fa-chart-line me-2"></i>Connectivity Gap Analysis
+            </h2>
+            <p class="text-muted">Analyzing school connectivity gaps and identifying priority areas for intervention</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <form id="filterForm" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="minSpeed" class="form-label">Minimum Connectivity Threshold (Mbps)</label>
+                            <input type="number" class="form-control" id="minSpeed" name="minSpeed" value="10" min="0" step="0.5">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="region" class="form-label">Region Filter</label>
+                            <select class="form-select" id="region" name="region">
+                                <option value="">All Regions</option>
+                                <!-- Regions will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats Section -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="dashboard-stat">
+                    <div class="stat-value" id="totalSchools">-</div>
+                    <div class="stat-label">Total Schools</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="dashboard-stat">
+                    <div class="stat-value text-danger" id="schoolsBelowThreshold">-</div>
+                    <div class="stat-label">Schools Below Threshold</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="dashboard-stat">
+                    <div class="stat-value text-primary" id="studentsAffected">-</div>
+                    <div class="stat-label">Students Affected</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="dashboard-stat">
+                    <div class="stat-value text-success" id="connectivityThreshold">-</div>
+                    <div class="stat-label">Threshold (Mbps)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connectivity Gap Analysis -->
+    <div class="row mb-4">
+        <!-- Priority Schools -->
+        <div class="col-12 col-lg-7 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-exclamation-triangle me-2"></i>Priority Schools</span>
+                    <span class="badge bg-danger" id="priorityCount">-</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>School Name</th>
+                                    <th>Region</th>
+                                    <th>Students</th>
+                                    <th>Connectivity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prioritySchoolsList">
+                                <!-- Will be populated with JavaScript -->
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Worst Connected Regions -->
+        <div class="col-12 col-lg-5 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <i class="fas fa-map-marked-alt me-2"></i>Worst Connected Regions
+                </div>
+                <div class="card-body">
+                    <div id="worstRegionsContainer">
+                        <!-- Will be populated with JavaScript -->
+                        <div class="text-center py-3">Loading data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-2"></i>Recommended Actions
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush" id="recommendedActionsList">
+                        <!-- Will be populated with JavaScript -->
+                        <li class="list-group-item text-center">Loading recommended actions...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to format numbers with commas
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Function to get status badge
+    function getStatusBadge(status) {
+        switch(status) {
+            case 'adequate':
+                return '<span class="badge bg-success">Adequate</span>';
+            case 'moderate':
+                return '<span class="badge bg-warning text-dark">Moderate</span>';
+            case 'poor':
+                return '<span class="badge bg-danger">Poor</span>';
+            default:
+                return '<span class="badge bg-secondary">Unknown</span>';
+        }
+    }
+
+    // Function to load and populate regions in the filter dropdown
+    function loadRegions() {
+        fetch('/api/schools')
+            .then(response => response.json())
+            .then(schools => {
+                const regionSelect = document.getElementById('region');
+                const regions = [...new Set(schools.map(school => school.region))].sort();
+                
+                regions.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region;
+                    option.textContent = region;
+                    regionSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading regions:', error));
+    }
+
+    // Function to load and display connectivity gap analysis
+    function loadConnectivityGaps(minSpeed = 10, region = '') {
+        // Show loading indicators
+        document.getElementById('prioritySchoolsList').innerHTML = '<tr><td colspan="5" class="text-center py-3">Loading data...</td></tr>';
+        document.getElementById('worstRegionsContainer').innerHTML = '<div class="text-center py-3">Loading data...</div>';
+        document.getElementById('recommendedActionsList').innerHTML = '<li class="list-group-item text-center">Loading recommended actions...</li>';
+        
+        // Build URL with query parameters
+        let url = `/api/connectivity/gaps?min_speed=${minSpeed}`;
+        if (region) {
+            url += `&region=${encodeURIComponent(region)}`;
+        }
+        
+        // Fetch connectivity gap data
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update summary stats
+                document.getElementById('totalSchools').textContent = formatNumber(data.total_schools);
+                document.getElementById('schoolsBelowThreshold').textContent = formatNumber(data.schools_below_threshold);
+                document.getElementById('studentsAffected').textContent = formatNumber(data.students_affected);
+                document.getElementById('connectivityThreshold').textContent = data.connectivity_threshold;
+                document.getElementById('priorityCount').textContent = data.priority_schools.length;
+                
+                // Update priority schools list
+                const prioritySchoolsList = document.getElementById('prioritySchoolsList');
+                if (data.priority_schools.length > 0) {
+                    prioritySchoolsList.innerHTML = '';
+                    data.priority_schools.forEach(school => {
+                        prioritySchoolsList.innerHTML += `
+                            <tr class="priority-school">
+                                <td>${school.name}</td>
+                                <td>${school.region}</td>
+                                <td>${formatNumber(school.students_affected)}</td>
+                                <td>${school.current_connectivity.toFixed(1)} Mbps</td>
+                                <td>${getStatusBadge(school.connectivity_status)}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    prioritySchoolsList.innerHTML = '<tr><td colspan="5" class="text-center py-3">No priority schools found</td></tr>';
+                }
+                
+                // Update worst connected regions
+                const worstRegionsContainer = document.getElementById('worstRegionsContainer');
+                if (data.worst_connected_regions.length > 0) {
+                    worstRegionsContainer.innerHTML = '';
+                    data.worst_connected_regions.forEach((region, index) => {
+                        const barWidth = 100 - (index * 15); // Decrease width for each subsequent region
+                        worstRegionsContainer.innerHTML += `
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">${region}</span>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: ${barWidth}%" 
+                                        aria-valuenow="${barWidth}" aria-valuemin="0" aria-valuemax="100">
+                                        ${region}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    worstRegionsContainer.innerHTML = '<div class="text-center py-3">No region data available</div>';
+                }
+                
+                // Update recommended actions
+                const recommendedActionsList = document.getElementById('recommendedActionsList');
+                if (data.recommended_actions.length > 0) {
+                    recommendedActionsList.innerHTML = '';
+                    data.recommended_actions.forEach(action => {
+                        recommendedActionsList.innerHTML += `
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>${action}
+                            </li>
+                        `;
+                    });
+                } else {
+                    recommendedActionsList.innerHTML = '<li class="list-group-item text-center">No recommended actions available</li>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching connectivity gap data:', error);
+                document.getElementById('prioritySchoolsList').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error loading data</td></tr>';
+                document.getElementById('worstRegionsContainer').innerHTML = '<div class="text-center text-danger py-3">Error loading region data</div>';
+                document.getElementById('recommendedActionsList').innerHTML = '<li class="list-group-item text-center text-danger">Error loading recommended actions</li>';
+            });
+    }
+
+    // Event listener for filter form submission
+    document.getElementById('filterForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const minSpeed = document.getElementById('minSpeed').value;
+        const region = document.getElementById('region').value;
+        loadConnectivityGaps(minSpeed, region);
+    });
+
+    // Load regions and initial connectivity gap data when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRegions();
+        loadConnectivityGaps();
+    });
+</script>
+{% endblock %}

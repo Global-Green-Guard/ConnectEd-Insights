@@ -30,19 +30,83 @@ By leveraging open-source technologies such as Python, Streamlit, and LangChain,
 - **Generative UI Components:**  
   Utilize interactive maps, charts, and tables to clearly present insights and recommendations.
 
-## Repository Structure
+## Implementation Guide for ConnectEd Insights App
+
+I've created several components to implement the connectivity gap analysis and improve the frontend UI. Here's how to structure and set up your application:
+
+### Directory Structure
 
 ```
-ConnectEd-Insights/
-├── .gitignore
-├── LICENSE
-├── README.md
-├── app.py
-└── modules
-    ├── ai_agent.py           # Handles LLM interactions via LangChain for processing natural language queries
-    ├── data_processor.py     # Processes geospatial and network data, and generates dummy datasets
-    └── visualizations.py     # Contains methods for creating interactive maps and graphs using Streamlit and Altair
+project/
+├── app.py                  # Updated FastAPI application
+├── static/
+│   └── css/
+│       └── style.css       # Any additional CSS can go here
+├── templates/
+│   ├── base.html           # New Bootstrap-enhanced base template
+│   ├── index.html          # New homepage
+│   ├── map.html            # Updated map page with Bootstrap
+│   └── analytics.html      # New connectivity gap analysis page
+├── data/
+│   └── School_report_page_1_out_of_3_dated_25022025_082235.csv  # Your existing data file
 ```
+
+## Implementation Steps
+
+1. **Update Base Template**:
+   - Replace your current `base.html` with the provided Bootstrap-enhanced version
+   - This creates a modern, responsive layout with sidebar navigation
+
+2. **Add Analytics Page**:
+   - Create a new `analytics.html` file in your templates directory using the provided code
+   - This implements the connectivity gap analysis feature
+
+3. **Update Map Page**:
+   - Replace your current `map.html` with the improved Bootstrap version
+   - Enhanced with better styling and more user-friendly controls
+
+4. **Add Home Page**:
+   - Create a new `index.html` in your templates directory
+   - This provides a dashboard overview of your application
+
+5. **Update App.py**:
+   - Replace your current `app.py` with the updated version
+   - Adds the new `/analytics` endpoint
+
+## Key Features Implemented
+
+1. **Connectivity Gap Analysis**:
+   - Dedicated page to analyze connectivity gaps in schools
+   - Interactive filters for minimum speed threshold and region selection
+   - Visual presentation of priority schools, affected students, and underserved regions
+   - Recommended actions based on analysis
+
+2. **Enhanced UI with Bootstrap**:
+   - Modern, responsive design across all pages
+   - Consistent theme with professional color scheme
+   - Interactive components (cards, charts, tables)
+   - Mobile-friendly layout
+
+3. **Improved Navigation**:
+   - Sidebar navigation for quick access to key features
+   - Top navigation bar for main sections
+   - Breadcrumbs and page headers for better context
+
+## Running the Application
+
+No changes are needed to how you run the application. You can continue to use:
+
+```
+python app.py
+```
+
+Or with Uvicorn directly:
+
+```
+uvicorn app:app --reload
+```
+
+The application will be available at http://localhost:8000.
 
 ## Setup and Installation
 

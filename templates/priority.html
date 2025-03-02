@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-primary">
+                <i class="fas fa-exclamation-triangle me-2"></i>Priority Schools
+            </h2>
+            <p class="text-muted">Schools with critical connectivity needs requiring immediate intervention</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <form id="filterForm" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="minSpeed" class="form-label">Connectivity Threshold (Mbps)</label>
+                            <input type="number" class="form-control" id="minSpeed" name="minSpeed" value="10" min="0" step="0.5">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="region" class="form-label">Region</label>
+                            <select class="form-select" id="region" name="region">
+                                <option value="">All Regions</option>
+                                <!-- Regions will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="educationLevel" class="form-label">Education Level</label>
+                            <select class="form-select" id="educationLevel" name="educationLevel">
+                                <option value="">All Levels</option>
+                                <!-- Education levels will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Apply
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Status Overview -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="bg-danger-subtle p-3 rounded">
+                            <i class="fas fa-exclamation-circle text-danger" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="fs-2 fw-bold mb-0" id="priorityCount">-</h3>
+                        <span class="text-muted">Priority Schools</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="bg-primary-subtle p-3 rounded">
+                            <i class="fas fa-users text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="fs-2 fw-bold mb-0" id="studentsAffected">-</h3>
+                        <span class="text-muted">Students Impacted</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="bg-warning-subtle p-3 rounded">
+                            <i class="fas fa-wifi text-warning" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="fs-2 fw-bold mb-0" id="avgConnectivity">-</h3>
+                        <span class="text-muted">Avg. Connectivity (Mbps)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Schools Table with Detailed Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-table me-2"></i>Priority Schools List</span>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="#" id="exportCSV">CSV</a></li>
+                            <li><a class="dropdown-item" href="#" id="exportPDF">PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>School Name</th>
+                                    <th>Region</th>
+                                    <th>Education Level</th>
+                                    <th>Students</th>
+                                    <th>Connectivity (Mbps)</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prioritySchoolsList">
+                                <tr>
+                                    <td colspan="7" class="text-center py-3">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <nav aria-label="Priority schools pagination">
+                        <ul class="pagination justify-content-end mb-0" id="pagination">
+                            <!-- Pagination will be populated via JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Intervention Planning -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-2"></i>Recommended Interventions
+                </div>
+                <div class="card-body">
+                    <div class="row" id="interventionsContainer">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <i class="fas fa-broadcast-tower me-2"></i>Immediate Actions
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">Deploy temporary wireless solutions to top 3 priority schools</li>
+                                        <li class="list-group-item">Upgrade existing equipment at schools with >1000 students</li>
+                                        <li class="list-group-item">Conduct bandwidth assessment for schools below 5 Mbps</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-project-diagram me-2"></i>Mid-term Projects
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">Extend fiber infrastructure to nearest 5 priority schools</li>
+                                        <li class="list-group-item">Implement shared connectivity hubs in densely populated regions</li>
+                                        <li class="list-group-item">Partner with local ISPs for subsidized school connectivity</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-header bg-info text-white">
+                                    <i class="fas fa-chart-line me-2"></i>Long-term Strategy
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">Develop regional connectivity master plans for sustainable access</li>
+                                        <li class="list-group-item">Establish ongoing monitoring system for all priority schools</li>
+                                        <li class="list-group-item">Create teacher training programs for effective connectivity usage</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to format numbers with commas
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Function to get status badge
+    function getStatusBadge(status) {
+        switch(status) {
+            case 'adequate':
+                return '<span class="badge bg-success">Adequate</span>';
+            case 'moderate':
+                return '<span class="badge bg-warning text-dark">Moderate</span>';
+            case 'poor':
+                return '<span class="badge bg-danger">Poor</span>';
+            default:
+                return '<span class="badge bg-secondary">Unknown</span>';
+        }
+    }
+
+    // Function to load unique regions and education levels
+    function loadFilterOptions() {
+        fetch('/api/schools')
+            .then(response => response.json())
+            .then(schools => {
+                // Populate regions
+                const regionSelect = document.getElementById('region');
+                const regions = [...new Set(schools.map(school => school.region))].sort();
+                
+                regions.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region;
+                    option.textContent = region;
+                    regionSelect.appendChild(option);
+                });
+
+                // Populate education levels
+                const educationLevelSelect = document.getElementById('educationLevel');
+                const educationLevels = [...new Set(schools.map(school => school.education_level))].sort();
+                
+                educationLevels.forEach(level => {
+                    const option = document.createElement('option');
+                    option.value = level;
+                    option.textContent = level;
+                    educationLevelSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading filter options:', error));
+    }
+
+    // Function to load and display priority schools
+    function loadPrioritySchools(minSpeed = 10, region = '', educationLevel = '') {
+        // Show loading indicator
+        document.getElementById('prioritySchoolsList').innerHTML = '<tr><td colspan="7" class="text-center py-3">Loading data...</td></tr>';
+        
+        // Fetch all schools first to apply more complex filtering
+        fetch('/api/schools')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(schools => {
+                // Filter schools based on criteria
+                let filteredSchools = schools.filter(school => school.current_connectivity < minSpeed);
+                
+                if (region) {
+                    filteredSchools = filteredSchools.filter(school => school.region === region);
+                }
+                
+                if (educationLevel) {
+                    filteredSchools = filteredSchools.filter(school => school.education_level === educationLevel);
+                }
+                
+                // Sort by priority (students affected, then connectivity)
+                filteredSchools.sort((a, b) => {
+                    if (a.students_affected !== b.students_affected) {
+                        return b.students_affected - a.students_affected;
+                    }
+                    return a.current_connectivity - b.current_connectivity;
+                });
+                
+                // Update summary stats
+                document.getElementById('priorityCount').textContent = filteredSchools.length;
+                
+                const totalStudents = filteredSchools.reduce((sum, school) => sum + school.students_affected, 0);
+                document.getElementById('studentsAffected').textContent = formatNumber(totalStudents);
+                
+                const avgConnectivity = filteredSchools.length > 0 
+                    ? (filteredSchools.reduce((sum, school) => sum + school.current_connectivity, 0) / filteredSchools.length).toFixed(1)
+                    : 0;
+                document.getElementById('avgConnectivity').textContent = avgConnectivity;
+                
+                // Update priority schools list
+                const prioritySchoolsList = document.getElementById('prioritySchoolsList');
+                if (filteredSchools.length > 0) {
+                    prioritySchoolsList.innerHTML = '';
+                    
+                    // For simplicity, just showing all schools without pagination in this example
+                    filteredSchools.forEach(school => {
+                        prioritySchoolsList.innerHTML += `
+                            <tr>
+                                <td>${school.name}</td>
+                                <td>${school.region}</td>
+                                <td>${school.education_level}</td>
+                                <td>${formatNumber(school.students_affected)}</td>
+                                <td>${school.current_connectivity.toFixed(1)}</td>
+                                <td>${getStatusBadge(school.connectivity_status)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewSchoolDetails('${school.id}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="planIntervention('${school.id}')">
+                                        <i class="fas fa-tools"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    prioritySchoolsList.innerHTML = '<tr><td colspan="7" class="text-center py-3">No priority schools found matching your criteria</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching schools data:', error);
+                document.getElementById('prioritySchoolsList').innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">Error loading data</td></tr>';
+            });
+    }
+
+    // Mock functions for button actions
+    function viewSchoolDetails(schoolId) {
+        alert(`Viewing details for school ID: ${schoolId}`);
+        // In a real app, this would open a modal or navigate to a details page
+    }
+
+    function planIntervention(schoolId) {
+        alert(`Planning intervention for school ID: ${schoolId}`);
+        // In a real app, this would open a modal with intervention planning options
+    }
+
+    // Event listener for filter form submission
+    document.getElementById('filterForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const minSpeed = document.getElementById('minSpeed').value;
+        const region = document.getElementById('region').value;
+        const educationLevel = document.getElementById('educationLevel').value;
+        loadPrioritySchools(minSpeed, region, educationLevel);
+    });
+
+    // Mock export functionality
+    document.getElementById('exportCSV').addEventListener('click', function(event) {
+        event.preventDefault();
+        alert('Exporting priority schools list as CSV');
+    });
+
+    document.getElementById('exportPDF').addEventListener('click', function(event) {
+        event.preventDefault();
+        alert('Exporting priority schools list as PDF');
+    });
+
+    // Load filter options and initial priority schools data when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFilterOptions();
+        loadPrioritySchools();
+    });
+</script>
+{% endblock %}

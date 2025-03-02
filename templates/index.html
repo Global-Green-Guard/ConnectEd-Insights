@@ -1,18 +1,167 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="dashboard">
-    <h2>Welcome to ConnectEd Insights</h2>
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Total Schools</h3>
-            <p>{{ schools|length }}</p>
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="display-4 fw-bold text-primary mb-3">ConnectEd Insights</h1>
+                            <p class="lead">AI-Driven School Connectivity Planning Platform for Kenya</p>
+                            <p class="mb-4">Monitor, analyze, and plan interventions to improve internet connectivity in Kenyan schools. Access real-time data and generate actionable insights to bridge the digital divide.</p>
+                            <div class="d-flex gap-3">
+                                <a href="/map" class="btn btn-primary">
+                                    <i class="fas fa-map-marked-alt me-2"></i>Explore Schools Map
+                                </a>
+                                <a href="/analytics" class="btn btn-outline-primary">
+                                    <i class="fas fa-chart-line me-2"></i>Connectivity Analysis
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-none d-md-block text-center">
+                            <i class="fas fa-wifi text-primary" style="font-size: 150px; opacity: 0.1;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <h3>Students Impacted</h3>
-            <p>{{ total_students }}</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Connectivity Overview</h4>
         </div>
-        <!-- Add more stat cards -->
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="bg-success-subtle p-3 rounded">
+                            <i class="fas fa-school text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="fs-2 fw-bold mb-0" id="totalSchools">-</h3>
+                        <span class="text-muted">Total Schools</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="bg-danger-subtle p-3 rounded">
+                            <i class="fas fa-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="fs-2 fw-bold mb-0" id="poorConnectivity">-</h3>
+                        <span class="text-muted">Poor Connectivity</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="bg-primary-subtle p-3 rounded">
+                            <i class="fas fa-users text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="fs-2 fw-bold mb-0" id="studentsAffected">-</h3>
+                        <span class="text-muted">Students Affected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Features -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="fas fa-th-large me-2"></i>Platform Features</h4>
+        </div>
+        
+        <div class="col-12 col-md-6 col-lg-3 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-map-marked-alt text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5>Interactive School Map</h5>
+                    <p class="text-muted">Visualize school locations and connectivity status across Kenya.</p>
+                    <a href="/map" class="btn btn-sm btn-outline-primary">Open Map</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-md-6 col-lg-3 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-bar text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5>Connectivity Analytics</h5>
+                    <p class="text-muted">Analyze connectivity gaps and identify priority intervention areas.</p>
+                    <a href="/analytics" class="btn btn-sm btn-outline-primary">View Analytics</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-md-6 col-lg-3 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-file-alt text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5>Reports & Insights</h5>
+                    <p class="text-muted">Generate detailed reports on school connectivity status.</p>
+                    <a href="#reports" class="btn btn-sm btn-outline-primary">View Reports</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-md-6 col-lg-3 mb-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-project-diagram text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5>Implementation Planning</h5>
+                    <p class="text-muted">Plan and track connectivity improvement projects.</p>
+                    <a href="#planning" class="btn btn-sm btn-outline-primary">Project Plans</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    // Load school statistics for the dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/schools')
+            .then(response => response.json())
+            .then(schools => {
+                // Update dashboard statistics
+                document.getElementById('totalSchools').textContent = schools.length;
+                
+                const poorConnectivity = schools.filter(s => s.connectivity_status === 'poor').length;
+                document.getElementById('poorConnectivity').textContent = poorConnectivity;
+                
+                const studentsAffected = schools
+                    .filter(s => s.connectivity_status === 'poor')
+                    .reduce((sum, school) => sum + school.students_affected, 0);
+                document.getElementById('studentsAffected').textContent = studentsAffected.toLocaleString();
+            })
+            .catch(error => {
+                console.error('Error loading school data:', error);
+            });
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2"><i class="fas fa-globe-africa me-2"></i>Regional Connectivity Analysis</h1>
+            <p class="text-muted">Analyze school connectivity patterns across different regions</p>
+        </div>
+    </div>
+
+    <!-- Region Selection -->
+    <div class="row mb-4">
+        <div class="col-md-8 col-lg-6">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Region Filter</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="regionSelector" class="form-label">Select Region:</label>
+                        <select class="form-select" id="regionSelector">
+                            <option value="">All Regions</option>
+                            <!-- Will be populated via JavaScript -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-6">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <span>Connectivity Threshold</span>
+                </div>
+                <div class="card-body">
+                    <label for="speedRange" class="form-label">Minimum Acceptable Speed: <span id="speedValue">10</span> Mbps</label>
+                    <input type="range" class="form-range" id="speedRange" min="1" max="50" value="10" step="1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regional Overview Stats -->
+    <div class="row mb-4" id="overviewStats">
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-body dashboard-stat">
+                    <div class="stat-value" id="totalSchools">--</div>
+                    <div class="stat-label">Total Schools</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-body dashboard-stat">
+                    <div class="stat-value text-danger" id="schoolsBelowThreshold">--</div>
+                    <div class="stat-label">Schools Below Threshold</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-body dashboard-stat">
+                    <div class="stat-value text-primary" id="studentsAffected">--</div>
+                    <div class="stat-label">Students Affected</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card">
+                <div class="card-body dashboard-stat">
+                    <div class="stat-value" id="avgConnectivity">--</div>
+                    <div class="stat-label">Avg. Connectivity (Mbps)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regional Map and Graph Row -->
+    <div class="row mb-4">
+        <div class="col-lg-7">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <span>Geographical Distribution</span>
+                </div>
+                <div class="card-body p-0">
+                    <div id="regionalMap" style="height: 400px; width: 100%; border-radius: 0 0 10px 10px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <span>Connectivity by Region</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="regionBarChart" width="400" height="350"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Schools Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <span>Priority Schools in Region</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>School Name</th>
+                                    <th>Education Level</th>
+                                    <th>Students</th>
+                                    <th>Connectivity (Mbps)</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prioritySchoolsTable">
+                                <!-- Will be populated via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <span>Recommended Actions</span>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="recommendedActions">
+                        <!-- Will be populated via JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Dependencies -->
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the map
+        const map = L.map('regionalMap').setView([-1.286389, 36.817223], 6); // Kenya center
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Define markers for different connectivity statuses
+        const markerIcons = {
+            adequate: L.divIcon({
+                html: '<i class="fas fa-wifi fa-lg" style="color: #28a745;"></i>',
+                className: 'custom-div-icon',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            }),
+            moderate: L.divIcon({
+                html: '<i class="fas fa-wifi fa-lg" style="color: #ffc107;"></i>',
+                className: 'custom-div-icon',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            }),
+            poor: L.divIcon({
+                html: '<i class="fas fa-wifi fa-lg" style="color: #dc3545;"></i>',
+                className: 'custom-div-icon',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            })
+        };
+        
+        // Chart variables
+        let regionBarChart;
+        
+        // Global variables to store data
+        let allSchools = [];
+        let uniqueRegions = [];
+        let currentAnalysis = null;
+        
+        // Function to update the analysis based on filters
+        function updateAnalysis() {
+            const selectedRegion = document.getElementById('regionSelector').value;
+            const minSpeed = parseInt(document.getElementById('speedRange').value);
+            
+            fetch(`/api/connectivity/gaps?min_speed=${minSpeed}${selectedRegion ? '&region=' + selectedRegion : ''}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentAnalysis = data;
+                    updateDashboard(data);
+                    updatePrioritySchools(data.priority_schools);
+                    updateRecommendedActions(data.recommended_actions);
+                })
+                .catch(error => {
+                    console.error('Error fetching analysis:', error);
+                });
+        }
+        
+        // Function to update dashboard statistics
+        function updateDashboard(data) {
+            document.getElementById('totalSchools').textContent = data.total_schools;
+            document.getElementById('schoolsBelowThreshold').textContent = data.schools_below_threshold;
+            document.getElementById('studentsAffected').textContent = data.students_affected.toLocaleString();
+            
+            // Calculate average connectivity
+            const selectedRegion = document.getElementById('regionSelector').value;
+            const filteredSchools = selectedRegion ? 
+                allSchools.filter(school => school.region === selectedRegion) : 
+                allSchools;
+            
+            const avgConn = filteredSchools.reduce((sum, school) => sum + school.current_connectivity, 0) / filteredSchools.length;
+            document.getElementById('avgConnectivity').textContent = avgConn.toFixed(1);
+            
+            // Update region chart
+            updateRegionChart();
+        }
+        
+        // Function to update the priority schools table
+        function updatePrioritySchools(schools) {
+            const tableBody = document.getElementById('prioritySchoolsTable');
+            tableBody.innerHTML = '';
+            
+            schools.forEach(school => {
+                const row = document.createElement('tr');
+                if (school.connectivity_status === 'poor') {
+                    row.classList.add('priority-school');
+                }
+                
+                row.innerHTML = `
+                    <td>${school.name}</td>
+                    <td>${school.education_level}</td>
+                    <td>${school.students_affected.toLocaleString()}</td>
+                    <td>${school.current_connectivity.toFixed(1)} Mbps</td>
+                    <td>
+                        <span class="badge ${getStatusBadgeClass(school.connectivity_status)}">
+                            ${capitalizeFirstLetter(school.connectivity_status)}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="focusOnSchool(${school.latitude}, ${school.longitude})">
+                            <i class="fas fa-map-marker-alt"></i> Locate
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Helper function to get badge class based on status
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'adequate': return 'bg-success';
+                case 'moderate': return 'bg-warning text-dark';
+                case 'poor': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+        
+        // Helper function to capitalize first letter
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
+        // Function to update recommended actions
+        function updateRecommendedActions(actions) {
+            const actionsList = document.getElementById('recommendedActions');
+            actionsList.innerHTML = '';
+            
+            actions.forEach(action => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<i class="fas fa-check-circle text-success me-2"></i> ${action}`;
+                actionsList.appendChild(li);
+            });
+        }
+        
+        // Function to update the region chart
+        function updateRegionChart() {
+            const selectedRegion = document.getElementById('regionSelector').value;
+            const speedThreshold = parseInt(document.getElementById('speedRange').value);
+            
+            // Process data for the chart
+            let regionsToShow = selectedRegion ? [selectedRegion] : uniqueRegions.slice(0, 7); // Show top 7 if all selected
+            
+            // For each region, calculate schools above and below threshold
+            const chartData = {
+                labels: regionsToShow,
+                datasets: [
+                    {
+                        label: 'Schools Above Threshold',
+                        data: regionsToShow.map(region => {
+                            const regionalSchools = allSchools.filter(s => s.region === region);
+                            return regionalSchools.filter(s => s.current_connectivity >= speedThreshold).length;
+                        }),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)'
+                    },
+                    {
+                        label: 'Schools Below Threshold',
+                        data: regionsToShow.map(region => {
+                            const regionalSchools = allSchools.filter(s => s.region === region);
+                            return regionalSchools.filter(s => s.current_connectivity < speedThreshold).length;
+                        }),
+                        backgroundColor: 'rgba(231, 76, 60, 0.7)'
+                    }
+                ]
+            };
+            
+            // Update or create chart
+            if (regionBarChart) {
+                regionBarChart.data = chartData;
+                regionBarChart.update();
+            } else {
+                const ctx = document.getElementById('regionBarChart').getContext('2d');
+                regionBarChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'School Connectivity by Region'
+                            },
+                        },
+                        responsive: true,
+                        scales: {
+                            x: {
+                                stacked: true,
+                            },
+                            y: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Schools'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Function to plot schools on the map
+        function plotSchoolsOnMap(schools) {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            schools.forEach(school => {
+                const marker = L.marker([school.latitude, school.longitude], {
+                    icon: markerIcons[school.connectivity_status]
+                }).addTo(map);
+                
+                marker.bindPopup(`
+                    <strong>${school.name}</strong><br>
+                    Region: ${school.region}<br>
+                    Connectivity: ${school.current_connectivity.toFixed(1)} Mbps<br>
+                    Students: ${school.students_affected.toLocaleString()}<br>
+                    Status: ${capitalizeFirstLetter(school.connectivity_status)}
+                `);
+            });
+            
+            // Add legend
+            if (!document.querySelector('.legend')) {
+                const legend = L.control({ position: 'bottomright' });
+                legend.onAdd = function(map) {
+                    const div = L.DomUtil.create('div', 'legend');
+                    div.innerHTML = `
+                        <h6 class="mb-2">Connectivity Status</h6>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #28a745;"></div>
+                            <div>Adequate</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffc107;"></div>
+                            <div>Moderate</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #dc3545;"></div>
+                            <div>Poor</div>
+                        </div>
+                    `;
+                    return div;
+                };
+                legend.addTo(map);
+            }
+        }
+        
+        // Function to focus on a specific school on the map
+        window.focusOnSchool = function(lat, lng) {
+            map.setView([lat, lng], 12);
+        };
+        
+        // Fetch all schools data
+        fetch('/api/schools')
+            .then(response => response.json())
+            .then(schools => {
+                allSchools = schools;
+                
+                // Extract unique regions for filter dropdown
+                uniqueRegions = [...new Set(schools.map(school => school.region))].sort();
+                
+                // Populate the region selector
+                const regionSelector = document.getElementById('regionSelector');
+                uniqueRegions.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region;
+                    option.textContent = region;
+                    regionSelector.appendChild(option);
+                });
+                
+                // Plot schools on map
+                plotSchoolsOnMap(schools);
+                
+                // Initial analysis update
+                updateAnalysis();
+            })
+            .catch(error => {
+                console.error('Error fetching schools:', error);
+            });
+        
+        // Update speed value display when slider changes
+        document.getElementById('speedRange').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value;
+        });
+        
+        // Event listeners for filters
+        document.getElementById('regionSelector').addEventListener('change', function() {
+            updateAnalysis();
+            
+            // Filter and replot map
+            const selectedRegion = this.value;
+            const filteredSchools = selectedRegion ? 
+                allSchools.filter(school => school.region === selectedRegion) : 
+                allSchools;
+            
+            plotSchoolsOnMap(filteredSchools);
+        });
+        
+        document.getElementById('speedRange').addEventListener('change', updateAnalysis);
+    });
+</script>
+{% endblock %}
