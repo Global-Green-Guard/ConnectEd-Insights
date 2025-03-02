@@ -313,5 +313,12 @@ async def priority_schools_page(request: Request):
         }
     )
 
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    return templates.TemplateResponse(
+        "settings.html",
+        {"request": request, "title": "Platform Settings"}
+    )
+
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", reload=True)

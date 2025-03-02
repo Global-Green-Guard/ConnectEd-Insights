@@ -117,6 +117,22 @@
             border-left: 4px solid var(--accent-color);
         }
         
+        /* Settings specific styles */
+        .settings-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .settings-section:last-child {
+            border-bottom: none;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .sidebar {
@@ -190,6 +206,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/analytics"><i class="fas fa-chart-bar me-1"></i> Analytics</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings"><i class="fas fa-cog me-1"></i> Settings</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -229,7 +248,7 @@
                 </li>
                 <li><hr class="dropdown-divider bg-light opacity-25 my-3"></li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#settings">
+                    <a class="nav-link" href="/settings">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                 </li>

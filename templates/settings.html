@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="fas fa-cog me-2"></i>Platform Settings</h2>
+                        <div>
+                            <button id="save-settings" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <button id="reset-settings" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-undo me-2"></i>Reset to Defaults
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-muted">Configure application preferences and data display options.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Form -->
+    <form id="settings-form">
+        <!-- General Settings -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>General Settings</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="settings-section">
+                            <h6 class="mb-3">Display Preferences</h6>
+                            
+                            <div class="mb-3">
+                                <label for="theme-selector" class="form-label">Application Theme</label>
+                                <select class="form-select" id="theme-selector">
+                                    <option value="light">Light Mode</option>
+                                    <option value="dark">Dark Mode</option>
+                                    <option value="auto">System Default</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="language-selector" class="form-label">Interface Language</label>
+                                <select class="form-select" id="language-selector">
+                                    <option value="en">English</option>
+                                    <option value="sw">Swahili</option>
+                                    <option value="fr">French</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h6 class="mb-3">Notifications</h6>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="enable-notifications" checked>
+                                <label class="form-check-label" for="enable-notifications">
+                                    Enable browser notifications
+                                </label>
+                                <div class="form-text">Receive alerts about critical connectivity issues</div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                                <label class="form-check-label" for="email-notifications">
+                                    Enable email notifications
+                                </label>
+                                <div class="form-text">Receive weekly reports and alerts via email</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email-frequency" class="form-label">Email Notification Frequency</label>
+                                <select class="form-select" id="email-frequency">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly" selected>Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Display Settings -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Data Settings</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="settings-section">
+                            <h6 class="mb-3">Map Display Options</h6>
+                            
+                            <div class="mb-3">
+                                <label for="default-map-view" class="form-label">Default Map View</label>
+                                <select class="form-select" id="default-map-view">
+                                    <option value="street">Street View</option>
+                                    <option value="satellite">Satellite</option>
+                                    <option value="terrain">Terrain</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="show-labels" checked>
+                                <label class="form-check-label" for="show-labels">
+                                    Show school labels on map
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="cluster-markers" checked>
+                                <label class="form-check-label" for="cluster-markers">
+                                    Cluster nearby school markers
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="connectivity-threshold" class="form-label">
+                                    Poor Connectivity Threshold (Mbps)
+                                </label>
+                                <input type="range" class="form-range" min="1" max="20" step="1" value="10" id="connectivity-threshold">
+                                <div class="d-flex justify-content-between">
+                                    <span>1 Mbps</span>
+                                    <span id="threshold-value">10 Mbps</span>
+                                    <span>20 Mbps</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h6 class="mb-3">Analytics Preferences</h6>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="show-student-data" checked>
+                                <label class="form-check-label" for="show-student-data">
+                                    Include student data in reports
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="default-region" class="form-label">Default Region Filter</label>
+                                <select class="form-select" id="default-region">
+                                    <option value="all">All Regions</option>
+                                    <option value="NAIROBI">Nairobi</option>
+                                    <option value="KISUMU">Kisumu</option>
+                                    <option value="NAKURU">Nakuru</option>
+                                    <option value="GARISSA">Garissa</option>
+                                    <option value="BUNGOMA">Bungoma</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="chart-colors" class="form-label">Chart Color Scheme</label>
+                                <select class="form-select" id="chart-colors">
+                                    <option value="default">Blue Gradient (Default)</option>
+                                    <option value="viridis">Viridis (Colorblind Friendly)</option>
+                                    <option value="pastel">Pastel</option>
+                                    <option value="cool">Cool Colors</option>
+                                    <option value="warm">Warm Colors</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Settings -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Account & Privacy</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="settings-section">
+                            <h6 class="mb-3">User Information</h6>
+                            
+                            <div class="mb-3">
+                                <label for="user-email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="user-email" placeholder="your.email@example.com">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="first-name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="first-name" placeholder="First Name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="last-name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="last-name" placeholder="Last Name">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="organization" class="form-label">Organization</label>
+                                <input type="text" class="form-control" id="organization" placeholder="Your Organization">
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h6 class="mb-3">Data Privacy</h6>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="data-collection" checked>
+                                <label class="form-check-label" for="data-collection">
+                                    Allow anonymous usage data collection
+                                </label>
+                                <div class="form-text">Helps us improve the platform functionality</div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="share-analytics">
+                                <label class="form-check-label" for="share-analytics">
+                                    Share anonymized analytics with partners
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update threshold value display
+        const thresholdSlider = document.getElementById('connectivity-threshold');
+        const thresholdValue = document.getElementById('threshold-value');
+        
+        thresholdSlider.addEventListener('input', function() {
+            thresholdValue.textContent = `${this.value} Mbps`;
+        });
+        
+        // Save settings button
+        document.getElementById('save-settings').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Collect all settings
+            const settings = {
+                theme: document.getElementById('theme-selector').value,
+                language: document.getElementById('language-selector').value,
+                notifications: {
+                    browser: document.getElementById('enable-notifications').checked,
+                    email: document.getElementById('email-notifications').checked,
+                    frequency: document.getElementById('email-frequency').value
+                },
+                map: {
+                    defaultView: document.getElementById('default-map-view').value,
+                    showLabels: document.getElementById('show-labels').checked,
+                    clusterMarkers: document.getElementById('cluster-markers').checked,
+                    connectivityThreshold: document.getElementById('connectivity-threshold').value
+                },
+                analytics: {
+                    showStudentData: document.getElementById('show-student-data').checked,
+                    defaultRegion: document.getElementById('default-region').value,
+                    chartColors: document.getElementById('chart-colors').value
+                },
+                account: {
+                    email: document.getElementById('user-email').value,
+                    firstName: document.getElementById('first-name').value,
+                    lastName: document.getElementById('last-name').value,
+                    organization: document.getElementById('organization').value
+                },
+                privacy: {
+                    dataCollection: document.getElementById('data-collection').checked,
+                    shareAnalytics: document.getElementById('share-analytics').checked
+                }
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('connectedSettings', JSON.stringify(settings));
+            
+            // Show success message
+            alert('Settings saved successfully!');
+            
+            // In a real app, you would send to server
+            console.log('Settings saved:', settings);
+        });
+        
+        // Reset settings button
+        document.getElementById('reset-settings').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to reset all settings to default values?')) {
+                localStorage.removeItem('connectedSettings');
+                location.reload();
+            }
+        });
+        
+        // Load saved settings if available
+        const savedSettings = localStorage.getItem('connectedSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            
+            // Apply saved settings to form
+            if (settings.theme) document.getElementById('theme-selector').value = settings.theme;
+            if (settings.language) document.getElementById('language-selector').value = settings.language;
+            
+            if (settings.notifications) {
+                document.getElementById('enable-notifications').checked = settings.notifications.browser;
+                document.getElementById('email-notifications').checked = settings.notifications.email;
+                document.getElementById('email-frequency').value = settings.notifications.frequency;
+            }
+            
+            if (settings.map) {
+                document.getElementById('default-map-view').value = settings.map.defaultView;
+                document.getElementById('show-labels').checked = settings.map.showLabels;
+                document.getElementById('cluster-markers').checked = settings.map.clusterMarkers;
+                document.getElementById('connectivity-threshold').value = settings.map.connectivityThreshold;
+                thresholdValue.textContent = `${settings.map.connectivityThreshold} Mbps`;
+            }
+            
+            if (settings.analytics) {
+                document.getElementById('show-student-data').checked = settings.analytics.showStudentData;
+                document.getElementById('default-region').value = settings.analytics.defaultRegion;
+                document.getElementById('chart-colors').value = settings.analytics.chartColors;
+            }
+            
+            if (settings.account) {
+                document.getElementById('user-email').value = settings.account.email;
+                document.getElementById('first-name').value = settings.account.firstName;
+                document.getElementById('last-name').value = settings.account.lastName;
+                document.getElementById('organization').value = settings.account.organization;
+            }
+            
+            if (settings.privacy) {
+                document.getElementById('data-collection').checked = settings.privacy.dataCollection;
+                document.getElementById('share-analytics').checked = settings.privacy.shareAnalytics;
+            }
+        }
+    });
+</script>
+{% endblock %}
