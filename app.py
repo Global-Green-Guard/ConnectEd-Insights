@@ -73,41 +73,45 @@ class ChatRequest(BaseModel):
 
 # generate_chat_response function
 def generate_chat_response(question: str) -> str:
-    """Enhanced response generation with error handling"""
+    """Generate responses using both dataset and AI analysis"""
     try:
         if not SCHOOLS_DATA:
             return "School data is currently unavailable. Please try again later."
-        if not client:
-            return "AI service is currently unavailable."
-            
-        # Create updated system prompt
-        system_prompt = f"""You're a school connectivity expert analyzing {len(SCHOOLS_DATA)} Kenyan schools.
-        Current statistics:
-        - Poor connectivity: {sum(1 for s in SCHOOLS_DATA if s.connectivity_status == 'poor')} schools
+
+        # First try to answer from dataset directly
+        if "highest connectivity" in question.lower():
+            best_school = max(SCHOOLS_DATA, key=lambda x: x.current_connectivity)
+            return (
+                f"The school with the best connectivity is {best_school.name} "
+                f"in {best_school.region} with {best_school.current_connectivity}Mbps."
+            )
+
+        # Create enhanced system prompt
+        system_prompt = f"""You are a connectivity expert analyzing {len(SCHOOLS_DATA)} Kenyan schools. 
+        You MUST use this data:
+        - Schools: {len(SCHOOLS_DATA)}
         - Average speed: {sum(s.current_connectivity for s in SCHOOLS_DATA)/len(SCHOOLS_DATA):.1f}Mbps
-        - Worst region: {max(set([s.region for s in SCHOOLS_DATA]), key=[s.region for s in SCHOOLS_DATA].count)}
+        - Regions: {', '.join({s.region for s in SCHOOLS_DATA})}
+        - Top 3 schools: {', '.join([s.name for s in sorted(SCHOOLS_DATA, key=lambda x: -x.current_connectivity)[:3]])}
         
-        For technical questions, recommend solutions like:
-        - Wireless point-to-point connections
-        - Satellite internet for remote areas
-        - Fiber optic partnerships with local ISPs
-        - LTE backup connections"""
-        
+        Never mention you're an AI model. Use phrases like "Based on current data" 
+        and "Our analysis shows". For missing data, suggest contacting support."""
+
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question}
             ],
-            temperature=0.5,
+            temperature=0.3,
             max_tokens=300
         )
         
         return response.choices[0].message.content
-        
+
     except Exception as e:
         print(f"AI Error: {str(e)}")
-        return "I'm having trouble accessing the analysis tools. Please try again later."
+        return "Our analysis service is currently unavailable. Please try again later."
 
 # Update the load_schools function
 def load_schools():
@@ -214,36 +218,41 @@ async def home(request: Request):
 async def chat_page(request: Request):
     return templates.TemplateResponse("chat.html", {"request": request, "title": "Chat"})
 
-# chat endpoint
+
+
+# chat endpoint to handle direct data queries first
 @app.post("/api/chat")
 async def chat_endpoint(chat_request: ChatRequest):
     try:
-        print(f"Received question: {chat_request.question}")  # Debug log
         question = chat_request.question.lower()
         
-        # Simple FAQ check
+        # Direct data responses
+        if "highest connectivity" in question:
+            if not SCHOOLS_DATA:
+                return {"answer": "School data currently unavailable"}
+            best_school = max(SCHOOLS_DATA, key=lambda x: x.current_connectivity)
+            return {"answer": f"{best_school.name} ({(best_school.current_connectivity)}Mbps) in {best_school.region}"}
+        
+        # FAQ responses
         connectivity_faq = {
             "wifi": "All schools have WiFi access with speeds up to 100Mbps.",
             "internet": "Internet access is available in computer labs during school hours.",
-            "contact": "Email support@connected.education or call +254 700 123 456",
             "speed": "Average school connection speed is 45Mbps (range: 10-100Mbps)",
-            "report": "Report issues to tech-support@connected.education with your school ID"
+            "report": "Report issues to tech-support@connected.education with your school ID",
+            "contact": "Email globalgreenguardg3@gmail.com"
+            # Add more FAQ entries
         }
-        
         for key, response in connectivity_faq.items():
             if key in question:
                 return {"answer": response}
-        
+
         # AI-generated response
-        if not SCHOOLS_DATA:
-            return {"answer": "School data is currently unavailable. Please try again later."}
-        
         answer = generate_chat_response(question)
         return {"answer": answer}
         
     except Exception as e:
         print(f"Chat error: {str(e)}")
-        return {"answer": "Error processing your request. Please try again."}
+        return {"answer": "Service unavailable. Please try again later."}
 
 
 @app.get("/api/connectivity/gaps", response_model=ConnectivityGapAnalysis)
