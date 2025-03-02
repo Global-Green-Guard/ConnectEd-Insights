@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Optional
@@ -9,12 +10,35 @@ import uvicorn
 import pandas as pd
 from datetime import datetime
 import random
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
+from pydantic import BaseModel
+
+
+load_dotenv()
+
+# Initialize OpenAI client
+try:
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+except Exception as e:
+    print(f"OpenAI client initialization failed: {str(e)}")
+    client = None
 
 # Initialize FastAPI app
 app = FastAPI(
     title="ConnectEd Insights",
     description="AI-Driven School Connectivity Planning Platform",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Set up static files and templates
@@ -44,40 +68,102 @@ class ConnectivityGapAnalysis(BaseModel):
     worst_connected_regions: List[str]
     recommended_actions: List[str]
 
-# Load and process school data
+class ChatRequest(BaseModel):
+    question: str
+
+# generate_chat_response function
+def generate_chat_response(question: str) -> str:
+    """Enhanced response generation with error handling"""
+    try:
+        if not SCHOOLS_DATA:
+            return "School data is currently unavailable. Please try again later."
+        if not client:
+            return "AI service is currently unavailable."
+            
+        # Create updated system prompt
+        system_prompt = f"""You're a school connectivity expert analyzing {len(SCHOOLS_DATA)} Kenyan schools.
+        Current statistics:
+        - Poor connectivity: {sum(1 for s in SCHOOLS_DATA if s.connectivity_status == 'poor')} schools
+        - Average speed: {sum(s.current_connectivity for s in SCHOOLS_DATA)/len(SCHOOLS_DATA):.1f}Mbps
+        - Worst region: {max(set([s.region for s in SCHOOLS_DATA]), key=[s.region for s in SCHOOLS_DATA].count)}
+        
+        For technical questions, recommend solutions like:
+        - Wireless point-to-point connections
+        - Satellite internet for remote areas
+        - Fiber optic partnerships with local ISPs
+        - LTE backup connections"""
+        
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question}
+            ],
+            temperature=0.5,
+            max_tokens=300
+        )
+        
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        print(f"AI Error: {str(e)}")
+        return "I'm having trouble accessing the analysis tools. Please try again later."
+
+# Update the load_schools function
 def load_schools():
     csv_path = BASE_DIR / "data/School_report_page_1_out_of_3_dated_25022025_082235.csv"
     
-    if not csv_path.exists():
-        raise FileNotFoundError(f"School data file not found at {csv_path}")
+    try:
+        print(f"Attempting to load data from: {csv_path}")
+        df = pd.read_csv(csv_path)
+        print(f"Successfully loaded {len(df)} raw records")
+        
+        # Add coordinate validation
+        initial_count = len(df)
+        df = df.dropna(subset=['Latitude', 'Longitude'])
+        df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
+        df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
+        df = df.dropna(subset=['Latitude', 'Longitude'])
+        print(f"After coordinate cleaning: {len(df)} records remaining")
 
-    df = pd.read_csv(csv_path)
-    
-    schools = []
-    kenyan_counties = ['BUNGOMA', 'GARISSA', 'KAJIADO', 'KISUMU', 'MACHAKOS', 
-                      'NAIROBI', 'NAKURU', 'NYERI', 'EMBU', 'LAIKIPIA', 'MURANG']
-    
-    for _, row in df.iterrows():
-        name_parts = row['School Name'].split()
-        region = next((part for part in name_parts if part in kenyan_counties), 'OTHER')
+        # Rest of your processing code...
+        schools = []
+        kenyan_counties = ['BUNGOMA', 'GARISSA', 'KAJIADO', 'KISUMU', 'MACHAKOS', 
+                         'NAIROBI', 'NAKURU', 'NYERI', 'EMBU', 'LAIKIPIA', 'MURANG']
         
-        students = random.randint(100, 2500)
-        connectivity = random.uniform(1, 50)
-        status = "adequate" if connectivity >= 20 else "moderate" if connectivity >= 10 else "poor"
+        for _, row in df.iterrows():
+            # Add try-except for row processing
+            try:
+                name_parts = row['School Name'].split()
+                region = next((part for part in name_parts if part in kenyan_counties), 'OTHER')
+                
+                students = random.randint(100, 2500)
+                connectivity = random.uniform(1, 50)
+                status = "adequate" if connectivity >= 20 else "moderate" if connectivity >= 10 else "poor"
+                
+                schools.append(School(
+                    id=row['School Giga ID'],
+                    name=row['School Name'],
+                    longitude=row['Longitude'],
+                    latitude=row['Latitude'],
+                    education_level=row['Education Level'],
+                    region=region,
+                    students_affected=students,
+                    current_connectivity=connectivity,
+                    connectivity_status=status,
+                    last_updated=datetime.now().isoformat()
+                ))
+            except Exception as e:
+                print(f"Error processing row {_}: {str(e)}")
+                continue
+                
+        print(f"Successfully processed {len(schools)} schools")
+        return schools
         
-        schools.append(School(
-            id=row['School Giga ID'],
-            name=row['School Name'],
-            longitude=row['Longitude'],
-            latitude=row['Latitude'],
-            education_level=row['Education Level'],
-            region=region,
-            students_affected=students,
-            current_connectivity=connectivity,
-            connectivity_status=status,
-            last_updated=datetime.now().isoformat()  # ISO formatted string
-        ))
-    return schools
+    except Exception as e:
+        print(f"Critical error loading schools: {str(e)}")
+        return []
+
 
 SCHOOLS_DATA = load_schools()
 
@@ -123,6 +209,43 @@ async def home(request: Request):
         {"request": request, "title": "ConnectEd Insights"}
     )
 
+# Define the /chat route
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_page(request: Request):
+    return templates.TemplateResponse("chat.html", {"request": request, "title": "Chat"})
+
+# chat endpoint
+@app.post("/api/chat")
+async def chat_endpoint(chat_request: ChatRequest):
+    try:
+        print(f"Received question: {chat_request.question}")  # Debug log
+        question = chat_request.question.lower()
+        
+        # Simple FAQ check
+        connectivity_faq = {
+            "wifi": "All schools have WiFi access with speeds up to 100Mbps.",
+            "internet": "Internet access is available in computer labs during school hours.",
+            "contact": "Email support@connected.education or call +254 700 123 456",
+            "speed": "Average school connection speed is 45Mbps (range: 10-100Mbps)",
+            "report": "Report issues to tech-support@connected.education with your school ID"
+        }
+        
+        for key, response in connectivity_faq.items():
+            if key in question:
+                return {"answer": response}
+        
+        # AI-generated response
+        if not SCHOOLS_DATA:
+            return {"answer": "School data is currently unavailable. Please try again later."}
+        
+        answer = generate_chat_response(question)
+        return {"answer": answer}
+        
+    except Exception as e:
+        print(f"Chat error: {str(e)}")
+        return {"answer": "Error processing your request. Please try again."}
+
+
 @app.get("/api/connectivity/gaps", response_model=ConnectivityGapAnalysis)
 async def get_connectivity_gaps(
     min_speed: float = Query(10.0, description="Minimum acceptable connectivity speed in Mbps"),
@@ -137,8 +260,10 @@ async def get_connectivity_gaps(
 
     return analyze_connectivity_gaps(SCHOOLS_DATA, min_speed, region)
 
+
 # New API endpoint for getting all schools
 @app.get("/api/schools", response_model=List[School])
+@app.get("/api/schools/", response_model=List[School])
 async def get_all_schools():
     return SCHOOLS_DATA
 
