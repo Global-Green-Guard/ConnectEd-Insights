@@ -3,211 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>{{ title }} - ConnectEd Insights</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Custom CSS -->
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --accent-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
+            /* --- NEW THEME COLORS --- */
+            --theme-primary: #4FD1C5; /* Teal from image inspiration */
+            --theme-primary-light: #A0F2E4;
+            --theme-primary-dark: #3BAB9C;
+
+            --theme-secondary: #718096; /* Muted gray for text */
+            --theme-background: #F7FAFC; /* Very light gray background */
+            --theme-card-bg: #FFFFFF;   /* White cards */
+            --theme-border-color: #E2E8F0; /* Light border color */
+            --theme-text-primary: #2D3748; /* Darker gray for primary text */
+            --theme-text-secondary: #718096; /* Lighter gray for secondary text */
+
+            --theme-success: #48BB78;
+            --theme-danger: #F56565;
+            --theme-warning: #ECC94B;
+            --theme-info: #4299E1;
+
+            --card-border-radius: 0.75rem;
+            --card-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --input-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
         
         body {
             display: flex;
             min-height: 100vh;
             flex-direction: column;
-            background-color: #f8f9fa;
+            background-color: var(--theme-background);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            color: var(--theme-text-primary);
+            font-size: 1rem;
         }
         
+        .navbar { /* Light navbar */
+            background-color: var(--theme-card-bg) !important;
+            box-shadow: var(--card-box-shadow);
+            border-bottom: 1px solid var(--theme-border-color);
+        }
+
         .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color) !important;
+            font-weight: 600; /* Semi-bold */
+            color: var(--theme-primary) !important;
+            font-size: 1.25rem;
+        }
+        .navbar .nav-link {
+            color: var(--theme-text-secondary) !important;
+            font-weight: 500;
+        }
+        .navbar .nav-link.active,
+        .navbar .nav-link:hover {
+            color: var(--theme-primary) !important;
+        }
+        .navbar-toggler {
+            border-color: rgba(0,0,0,0.1);
+        }
+        .navbar-toggler-icon {
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(45, 55, 72, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
         }
         
         .main-container {
             display: flex;
             flex: 1;
+            margin-top: 0; /* Navbar is part of flow, or adjust if fixed */
         }
         
-        .sidebar {
-            width: 250px;
-            background-color: var(--secondary-color);
-            color: white;
-            padding-top: 20px;
-            height: calc(100vh - 56px);
+        .sidebar { /* Light sidebar */
+            width: 260px; /* Slightly wider */
+            background-color: var(--theme-card-bg);
+            color: var(--theme-text-primary);
+            padding-top: 1.5rem;
+            height: calc(100vh - 65px); /* Adjust to your navbar height */
             position: fixed;
             left: 0;
-            top: 56px;
+            top: 65px; /* Adjust to your navbar height */
             overflow-y: auto;
+            border-right: 1px solid var(--theme-border-color);
+            box-shadow: var(--card-box-shadow);
+            z-index: 1000;
         }
         
         .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 0.5rem 1rem;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            transition: all 0.3s;
+            color: var(--theme-text-secondary);
+            padding: 0.75rem 1.25rem;
+            margin: 0.25rem 0.75rem; /* Add horizontal margin */
+            border-radius: 0.5rem; /* Softer radius */
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
         }
         
-        .sidebar .nav-link:hover,
+        .sidebar .nav-link:hover {
+            background-color: var(--theme-primary-light);
+            color: var(--theme-primary-dark);
+        }
         .sidebar .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        
-        .sidebar .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .content {
-            flex: 1;
-            padding: 20px;
-            margin-left: 250px;
-            width: calc(100% - 250px);
-            overflow-x: hidden;
-        }
-        
-        .dashboard-card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            overflow: hidden;
-        }
-        
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card-header {
-            background-color: var(--primary-color);
+            background-color: var(--theme-primary);
             color: white;
             font-weight: 600;
         }
+        .sidebar .nav-link.active i {
+            color: white !important; /* Ensure icon color matches text */
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+            color: var(--theme-secondary); /* Default icon color */
+        }
+        
+        .sidebar h5.sidebar-heading { /* Specific class for sidebar heading */
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--theme-text-secondary);
+            padding: 0.5rem 1.25rem;
+            margin-top: 1rem;
+        }
+         .sidebar hr {
+            border-top: 1px solid var(--theme-border-color);
+            margin: 1rem 0.75rem;
+         }
+        
+        .content {
+            flex: 1;
+            padding: 1.75rem; /* Increased padding */
+            margin-left: 260px; /* Match sidebar width */
+            width: calc(100% - 260px);
+            overflow-x: hidden;
+            margin-top: 65px; /* Account for fixed navbar */
+        }
+        
+        .dashboard-card {
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--card-box-shadow);
+            background-color: var(--theme-card-bg);
+            border: 1px solid var(--theme-border-color);
+            margin-bottom: 1.75rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: var(--theme-card-bg);
+            color: var(--theme-text-primary);
+            font-weight: 600; /* Semi-bold headers */
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--theme-border-color);
+            display: flex;
+            align-items: center;
+        }
+        .card-header i {
+            margin-right: 0.5rem;
+            color: var(--theme-primary); /* Icon color in header */
+        }
+
+        .card-header.bg-primary-themed { /* For cards that need the primary color header */
+             background-color: var(--theme-primary);
+             color: white;
+             border-bottom: none;
+        }
+        .card-header.bg-primary-themed i {
+            color: white;
+        }
         
         .dashboard-stat {
-            text-align: center;
-            padding: 15px;
+            text-align: left;
+            padding: 1.25rem 1.5rem;
         }
         
         .stat-value {
-            font-size: 2rem;
+            font-size: 2rem; /* Slightly smaller for better fit */
             font-weight: 700;
-            color: var(--dark-color);
+            color: var(--theme-text-primary);
+            line-height: 1.2;
         }
+        .stat-value.text-primary { color: var(--theme-primary) !important; }
+        .stat-value.text-success { color: var(--theme-success) !important; }
+        .stat-value.text-danger { color: var(--theme-danger) !important; }
+        .stat-value.text-warning { color: var(--theme-warning) !important; }
         
         .stat-label {
-            font-size: 0.9rem;
-            color: #6c757d;
-            text-transform: uppercase;
+            font-size: 0.875rem;
+            color: var(--theme-text-secondary);
+            margin-top: 0.375rem;
+            font-weight: 500;
         }
         
         .priority-school {
-            border-left: 4px solid var(--accent-color);
+            border-left: 4px solid var(--theme-danger);
         }
         
-        /* Settings specific styles */
-        .settings-section {
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid #e9ecef;
+        /* Button styling */
+        .btn {
+            font-weight: 500;
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            box-shadow: var(--input-box-shadow);
+            transition: all 0.2s ease;
         }
-        
-        .settings-section:last-child {
-            border-bottom: none;
+        .btn-primary {
+            background-color: var(--theme-primary);
+            border-color: var(--theme-primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--theme-primary-dark);
+            border-color: var(--theme-primary-dark);
+            transform: translateY(-1px);
+        }
+        .btn-outline-primary {
+            color: var(--theme-primary);
+            border-color: var(--theme-primary);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--theme-primary);
+            border-color: var(--theme-primary);
+            color: white;
+        }
+        .btn-sm {
+            padding: 0.35rem 0.8rem;
+            font-size: 0.875rem;
+        }
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.125rem;
+        }
+
+
+        /* Form elements consistency */
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            border: 1px solid var(--theme-border-color);
+            box-shadow: var(--input-box-shadow);
+            padding: 0.6rem 0.75rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--theme-primary), 0.25); /* Using HSLA or RGBA for primary focus */
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--theme-text-primary);
         }
         
         .form-check-input:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: var(--theme-primary);
+            border-color: var(--theme-primary);
+        }
+        .form-check-input {
+             box-shadow: none;
         }
         
         /* Responsive adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: 991.98px) { /* Bootstrap's lg breakpoint */
             .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                margin-bottom: 20px;
-                top: 0;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 1040; /* Ensure sidebar is on top when open */
             }
-            
+            .sidebar.open {
+                transform: translateX(0);
+            }
             .content {
                 margin-left: 0;
                 width: 100%;
             }
+            .navbar-toggler-sidebar { /* New class for sidebar toggler */
+                display: block !important;
+                margin-right: 1rem;
+            }
         }
-        
+        @media (min-width: 992px) {
+            .navbar-toggler-sidebar {
+                display: none !important;
+            }
+        }
+
         /* Map specific styles */
         #map {
-            height: 700px;
+            min-height: 450px;
+            height: calc(100vh - 250px); /* Adjust as needed */
+            max-height: 700px;
             width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: var(--card-border-radius);
+            border: 1px solid var(--theme-border-color);
         }
         
         .legend {
             position: absolute;
-            bottom: 30px;
-            right: 30px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+            bottom: 20px;
+            right: 20px;
+            background: var(--theme-card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--card-box-shadow);
             z-index: 1000;
         }
+        .legend h6 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--theme-text-primary);
+        }
+        .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
+        .legend-item:last-child { margin-bottom: 0; }
+        .legend-color { width: 18px; height: 18px; border-radius: 50%; margin-right: 0.75rem; }
         
-        .legend-item {
+        /* Table Styles */
+        .table { margin-bottom: 0; }
+        .table thead th {
+            background-color: #F9FAFB; /* Very light gray for table header */
+            border-bottom: 2px solid var(--theme-border-color);
+            font-weight: 600;
+            color: var(--theme-text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #EDF2F7; /* Light hover for table rows */
+        }
+        .table td, .table th {
+            vertical-align: middle;
+            border-top: 1px solid var(--theme-border-color);
+        }
+
+        .text-muted { color: var(--theme-text-secondary) !important; }
+        
+        /* Page Header Styling */
+        .page-header-block { /* Wrapper for H2 and P */
+            margin-bottom: 1.5rem;
+        }
+        .page-header-block h2, .page-header-block h1 {
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 0.375rem;
+            font-size: 1.75rem;
+        }
+        .page-header-block .text-primary-icon { /* Specific class for icons in header if needed */
+            color: var(--theme-primary) !important;
+        }
+        .page-header-block p.text-muted {
+            font-size: 1rem;
+            margin-bottom: 0;
+            color: var(--theme-text-secondary) !important;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.65em;
+        }
+        .badge.bg-success { background-color: var(--theme-success) !important; color: white; }
+        .badge.bg-danger  { background-color: var(--theme-danger) !important; color: white; }
+        .badge.bg-warning { background-color: var(--theme-warning) !important; color: var(--theme-text-primary); }
+        .badge.bg-primary { background-color: var(--theme-primary) !important; color: white; }
+        .badge.bg-info    { background-color: var(--theme-info) !important; color: white; }
+        .badge.bg-secondary { background-color: var(--theme-border-color) !important; color: var(--theme-text-secondary); }
+
+
+        /* Spinner adjustments */
+        .spinner-border {
+            color: var(--theme-primary);
+        }
+        .loading-placeholder {
             display: flex;
+            justify-content: center;
             align-items: center;
-            margin-bottom: 8px;
+            min-height: 150px; /* Ensure it's visible */
+            color: var(--theme-text-secondary);
         }
-        
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-right: 10px;
+        .loading-placeholder .spinner-border {
+            margin-right: 0.5rem;
         }
+
     </style>
 </head>
 <body>
     <!-- Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top"> 
         <div class="container-fluid">
+            <button class="navbar-toggler navbar-toggler-sidebar d-lg-none me-2" type="button" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
             <a class="navbar-brand" href="/">
-                <i class="fas fa-wifi me-2"></i>ConnectEd Insights
+                <i class="fas fa-broadcast-tower me-1"></i>ConnectEd Insights 
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Home</a>
+                        <a class="nav-link" href="/"><i class="fas fa-home-alt me-1"></i> Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/chat"><i class="fas fa-comment me-1"></i> Chat</a>
+                        <a class="nav-link" href="/chat"><i class="fas fa-comments me-1"></i> Chat</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/map"><i class="fas fa-map-marked-alt me-1"></i> Map</a>
+                        <a class="nav-link" href="/map"><i class="fas fa-map-location-dot me-1"></i> Map</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/analytics"><i class="fas fa-chart-bar me-1"></i> Analytics</a>
+                        <a class="nav-link" href="/analytics"><i class="fas fa-chart-pie me-1"></i> Analytics</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/settings"><i class="fas fa-cog me-1"></i> Settings</a>
+                        <a class="nav-link" href="/settings"><i class="fas fa-sliders-h me-1"></i> Settings</a>
                     </li>
                 </ul>
             </div>
@@ -216,37 +427,40 @@
 
     <div class="main-container">
         <!-- Sidebar -->
-        <nav class="sidebar d-none d-md-block">
-            <div class="px-3 mb-3">
-                <h5 class="text-uppercase text-light opacity-75">Quick Access</h5>
+        <nav class="sidebar" id="appSidebar">
+            <div class="px-3 mb-2 pt-1">
+                <h5 class="sidebar-heading">Main Menu</h5>
             </div>
-            <ul class="nav flex-column px-2">
+            <ul class="nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link" href="/chat">
-                        <i class="fas fa-comment"></i> Chat
+                        <i class="fas fa-comments"></i> Chat Assistant
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/map">
-                        <i class="fas fa-map-marker-alt"></i> School Map
+                        <i class="fas fa-map-marked-alt"></i> School Map
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/analytics">
-                        <i class="fas fa-chart-line"></i> Connectivity Analysis
+                        <i class="fas fa-chart-line"></i> Gap Analysis
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/priority-schools">
-                        <i class="fas fa-exclamation-triangle"></i> Priority Schools
+                        <i class="fas fa-school-flag"></i> Priority Schools
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/regional-analysis">
-                        <i class="fas fa-chart-bar"></i> Regional Analysis
+                        <i class="fas fa-globe-africa"></i> Regional Analysis
                     </a>
                 </li>
-                <li><hr class="dropdown-divider bg-light opacity-25 my-3"></li>
+                <li><hr class="dropdown-divider my-3"></li>
+                 <li class="nav-item">
+                    <h5 class="sidebar-heading">Application</h5>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/settings">
                         <i class="fas fa-cog"></i> Settings
@@ -260,9 +474,92 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1039;"></div>
 
-    <!-- Bootstrap & JS Dependencies -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // --- Sidebar and Navbar Link Activation ---
+            var currentPath = window.location.pathname;
+            // Normalize currentPath to ensure consistent matching
+            if (currentPath.endsWith('/') && currentPath.length > 1) {
+                currentPath = currentPath.slice(0, -1);
+            }
+            
+            $('.sidebar .nav-link').each(function() {
+                var linkHref = $(this).attr('href');
+                if (linkHref.endsWith('/') && linkHref.length > 1) {
+                    linkHref = linkHref.slice(0, -1);
+                }
+                if (currentPath === linkHref || (currentPath === '' && linkHref === '/')) {
+                    $(this).addClass('active');
+                } else {
+                    $(this).removeClass('active');
+                }
+            });
+
+            $('.navbar-nav .nav-link').each(function() {
+                var linkHref = $(this).attr('href');
+                 if (linkHref.endsWith('/') && linkHref.length > 1) {
+                    linkHref = linkHref.slice(0, -1);
+                }
+                if (currentPath === linkHref || (currentPath === '' && linkHref === '/')) {
+                     $(this).addClass('active').attr('aria-current', 'page');
+                } else {
+                    $(this).removeClass('active').removeAttr('aria-current');
+                }
+            });
+
+            // --- Sidebar Toggle for Mobile ---
+            const sidebar = $('#appSidebar');
+            const sidebarToggler = $('.navbar-toggler-sidebar');
+            const sidebarOverlay = $('#sidebarOverlay');
+
+            function openSidebar() {
+                sidebar.addClass('open');
+                sidebarOverlay.fadeIn(200);
+                $('body').css('overflow', 'hidden'); // Prevent body scroll when sidebar is open
+            }
+
+            function closeSidebar() {
+                sidebar.removeClass('open');
+                sidebarOverlay.fadeOut(200);
+                $('body').css('overflow', '');
+            }
+
+            sidebarToggler.on('click', function(e) {
+                e.stopPropagation(); // Prevent click from bubbling up
+                if (sidebar.hasClass('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+
+            sidebarOverlay.on('click', function() {
+                closeSidebar();
+            });
+
+            // Close sidebar if user clicks outside of it (on content area)
+            $(document).on('click', function(event) {
+                if (sidebar.hasClass('open') && !$(event.target).closest('#appSidebar').length && !$(event.target).closest('.navbar-toggler-sidebar').length) {
+                    closeSidebar();
+                }
+            });
+
+
+            // Update navbar height for fixed elements (sidebar and content margin-top)
+            const navbarHeight = $('.navbar.fixed-top').outerHeight();
+            if (navbarHeight) {
+                $('.sidebar').css({
+                    'height': `calc(100vh - ${navbarHeight}px)`,
+                    'top': `${navbarHeight}px`
+                });
+                $('.content').css('margin-top', `${navbarHeight}px`);
+            }
+
+        });
+    </script>
 </body>
 </html>
